@@ -66,8 +66,6 @@ public class PlayerController : MonoBehaviour
 
         if (isGroundedBool)
         {
-            canDoubleJump = true; // Reset double jump when grounded
-
             if (controlmode == Controls.pc)
             {
                 moveX = Input.GetAxis("Horizontal");
@@ -77,14 +75,6 @@ public class PlayerController : MonoBehaviour
             if (Input.GetButtonDown("Jump"))
             {
                 Jump(jumpForce);
-            }
-        }
-        else
-        {
-            if (canDoubleJump && Input.GetButtonDown("Jump"))
-            {
-                Jump(doubleJumpForce);
-                canDoubleJump = false; // Disable double jump until grounded again
             }
         }
 
@@ -111,16 +101,6 @@ public class PlayerController : MonoBehaviour
             FlipSprite(moveX);
         }
 
-        //impactEffect
-
-        if(!wasonGround && isGroundedBool)
-        {
-            ImpactEffect.gameObject.SetActive(true);
-            ImpactEffect.Stop();
-            ImpactEffect.transform.position = new Vector2(footsteps.transform.position.x,footsteps.transform.position.y-0.2f);
-            ImpactEffect.Play();
-        }
-
         wasonGround = isGroundedBool;
 
         
@@ -130,12 +110,10 @@ public class PlayerController : MonoBehaviour
         if (moveX != 0 && isGroundedBool)
         {
             playeranim.SetBool("run", true);
-            footEmissions.rateOverTime= 35f;
         }
         else
         {
             playeranim.SetBool("run",false);
-            footEmissions.rateOverTime = 0f;
         }
 
         playeranim.SetBool("isGrounded", isGroundedBool);

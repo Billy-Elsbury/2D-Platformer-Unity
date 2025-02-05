@@ -13,7 +13,6 @@ public class GameManager : MonoBehaviour
     [SerializeField] private PlayerController playerController;
 
     private int coinCount = 0;
-    private int gemCount = 0;
     private bool isGameOver = false;
     private Vector3 playerPosition;
 
@@ -23,14 +22,8 @@ public class GameManager : MonoBehaviour
     [SerializeField] TMP_Text leveCompletePanelTitle;
     [SerializeField] TMP_Text levelCompleteCoins;
 
-
-
-
-   
     private int totalCoins = 0;
   
-
-
 
     private void Awake()
     {
@@ -50,11 +43,6 @@ public class GameManager : MonoBehaviour
     public void IncrementCoinCount()
     {
         coinCount++;
-        UpdateGUI();
-    }
-    public void IncrementGemCount()
-    {
-        gemCount++;
         UpdateGUI();
     }
 
@@ -97,25 +85,15 @@ public class GameManager : MonoBehaviour
             if (pickupObject.pt == pickup.pickupType.coin)
             {
                 totalCoins += 1;
-            }
-           
+            }  
         }
-
-
-      
     }
+
     public void LevelComplete()
     {
-       
-
-
         levelCompletePanel.SetActive(true);
         leveCompletePanelTitle.text = "LEVEL COMPLETE";
-
-
-
         levelCompleteCoins.text = "COINS COLLECTED: "+ coinCount.ToString() +" / " + totalCoins.ToString();
- 
     }
    
     public IEnumerator DeathCoroutine()

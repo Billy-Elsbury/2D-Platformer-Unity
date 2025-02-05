@@ -5,12 +5,17 @@ using UnityEngine.SceneManagement;
 
 public class ExitTrigger : MonoBehaviour
 {
+    private GameManager gameManager;
     //public Animator anim;
     private void OnTriggerEnter2D(Collider2D collision)
     {
         if (collision.gameObject.tag == "Player")
         {
-            StartCoroutine("LevelExit");
+            //Reset Scene and check scores
+            //gameManager.LevelComplete();
+
+            SceneManager.LoadScene(1);
+
         }
     }
 
