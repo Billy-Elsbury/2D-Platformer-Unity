@@ -17,9 +17,7 @@ public class pickup : MonoBehaviour
                 GameManager.instance.IncrementCoinCount();
            
                 Destroy(this.gameObject,0.2f);
-                
             }
-            
         }
     }
 }

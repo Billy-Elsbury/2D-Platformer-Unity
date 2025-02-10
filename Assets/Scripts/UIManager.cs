@@ -11,9 +11,7 @@ public class UIManager : MonoBehaviour
     public float fadeSpeed = 2f;
 
     //player reference
-
     public PlayerController playerController;
-
 
     private void Awake()
     {
@@ -24,6 +22,7 @@ public class UIManager : MonoBehaviour
     {
         mobileControls.SetActive(false);
     }
+
     public void EnableMobileControls()
     {
         mobileControls.SetActive(true);

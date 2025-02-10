@@ -28,8 +28,6 @@ public class HealthManager : MonoBehaviour
         DisplayHearts();
     }
    
-  
-
     public void HurtPlayer()
     {
 
@@ -71,7 +69,4 @@ public class HealthManager : MonoBehaviour
             }
         }
     }
-
-    
-
 }
