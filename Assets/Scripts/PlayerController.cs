@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public enum Controls { mobile,pc}
+public enum Controls { mobile,pc, AI}
 
 public class PlayerController : MonoBehaviour
 {
@@ -16,9 +16,9 @@ public class PlayerController : MonoBehaviour
 
     private Rigidbody2D rb;
     private bool isGroundedBool = false;
-
+    private Chromosome inputChromosome;
     public Animator playeranim;
-
+    float gameTime = 0;
     public Controls controlmode;
    
 
@@ -37,6 +37,7 @@ public class PlayerController : MonoBehaviour
 
     private void Start()
     {
+        inputChromosome = new Chromosome(); /// need to fill with individual
         rb = GetComponent<Rigidbody2D>();
         footEmissions = footsteps.emission;
 
@@ -50,6 +51,10 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        gameTime += Time.deltaTime;
+
+        moveX = inputChromosome.updateX(gameTime);
+
         isGroundedBool = IsGrounded();
 
         if (isGroundedBool)
