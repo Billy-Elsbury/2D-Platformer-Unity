@@ -47,7 +47,7 @@ public class GameManager : MonoBehaviour
 
         FindTotalPickups();
 
-        Time.timeScale = 4.0f;
+        //Time.timeScale = 4.0f;
     }
 
 

@@ -1638,7 +1638,7 @@ Transform:
   m_GameObject: {fileID: 519420028}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -11.445086, y: -0.18076003, z: -10}
+  m_LocalPosition: {x: -14.0103445, y: -0.17058003, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1955,8 +1955,9 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 8
   groundCheck: {fileID: 93182928}
+  isGroundedBool: 0
   playeranim: {fileID: 1126557507}
-  controlmode: 1
+  controlmode: 2
   isPaused: 0
   footsteps: {fileID: 0}
   ImpactEffect: {fileID: 0}
