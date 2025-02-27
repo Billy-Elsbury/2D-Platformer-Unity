@@ -7,11 +7,11 @@ public class Problem
     public int NumberOfGenes { get; private set; }
     public float MinValue { get; private set; }
     public float MaxValue { get; private set; }
-    public Func<float[], float> CostFunction { get; private set; }
+    public Func<Individual, float> CostFunction { get; private set; }
     public float MaxAcceptedCost { get; private set; }
     public PlayerController Player { get; private set; }
 
-    public Problem(int numberOfGenes, float minValue, float maxValue, Func<float[], float> costFunction, float maxAcceptedCost, PlayerController player)
+    public Problem(int numberOfGenes, float minValue, float maxValue, Func<Individual, float> costFunction, float maxAcceptedCost, PlayerController player)
     {
         NumberOfGenes = numberOfGenes;
         MinValue = minValue;
@@ -20,4 +20,5 @@ public class Problem
         MaxAcceptedCost = maxAcceptedCost;
         Player = player;
     }
+
 }

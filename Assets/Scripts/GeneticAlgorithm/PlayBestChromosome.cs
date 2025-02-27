@@ -18,7 +18,6 @@ public class PlayBestChromosome : MonoBehaviour
         gar = GameObject.Find("GeneticAlgorithmRunner").GetComponent<GeneticAlgorithmRunner>();
         gm = GameManager.instance;
         startPosition = player.startPosition;
-
     }
 
     public void PlayBestSolution()
@@ -59,20 +58,8 @@ public class PlayBestChromosome : MonoBehaviour
 
     private IEnumerator SimulateBestSolution()
     {
-        // Gather final stats
-        Vector3 finalPosition = player.transform.position;
-        int finalCoins = gm.coinCount;
-        float totalTime = gm.gameTimer;
-        bool reachedGoal = gm.reachedGoal;
-        bool died = player.isDead;
-
-        Debug.Log($"Final Stats: \n" +
-                  $"Position: (X: {finalPosition.x:F2}\n" +
-                  $"Coins Collected: {finalCoins}\n" +
-                  $"Total Time Taken: {totalTime:F2} seconds\n" +
-                  $"Reached Goal: {reachedGoal}\n" +
-                  $"Died: {died}\n" +
-                  $"Fitness Score: {gar.bestSolution.Cost:F2}");
+        // Track the best progress during the simulation
+        float bestProgress = player.transform.position.x;
 
         Time.timeScale = 1f; // Normal speed for replay
 
@@ -80,10 +67,15 @@ public class PlayBestChromosome : MonoBehaviour
         float simulationTime = gar.simulationTime;
         float startTime = Time.time;
 
-
         while (Time.time - startTime < simulationTime)
         {
             yield return new WaitForFixedUpdate();
+
+            // Update best progress
+            if (player.transform.position.x > bestProgress)
+            {
+                bestProgress = player.transform.position.x;
+            }
 
             if (gm.reachedGoal || player.isDead)
             {
@@ -92,6 +84,20 @@ public class PlayBestChromosome : MonoBehaviour
 
             yield return null;
         }
+
+        // Gather final stats
+        int finalCoins = gm.coinCount;
+        float totalTime = gm.gameTimer;
+        bool reachedGoal = gm.reachedGoal;
+        bool died = player.isDead;
+
+        Debug.Log($"Final Stats: \n" +
+                  $"Best Progress: {bestProgress:F2}\n" +
+                  $"Coins Collected: {finalCoins}\n" +
+                  $"Total Time Taken: {totalTime:F2} seconds\n" +
+                  $"Reached Goal: {reachedGoal}\n" +
+                  $"Died: {died}\n" +
+                  $"Fitness Score: {gar.bestSolution.Cost:F2}");
 
         Debug.Log("Best solution simulation complete.");
     }

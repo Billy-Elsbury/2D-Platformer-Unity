@@ -33,12 +33,11 @@ public class GameManager : MonoBehaviour
     internal float gameTimer = 0f;
 
     // Runtime Performance 
-    private int gameSpeed = 50;
+    private int gameSpeed = 100;
     private int frameRate = 60;
 
     private void Awake()
     {
-
         instance = this;
         Application.targetFrameRate = frameRate;
     }

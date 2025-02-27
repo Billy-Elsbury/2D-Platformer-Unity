@@ -1,12 +1,10 @@
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 
 public class Individual
 {
     public float[] Chromosome { get; set; }
     public float Cost { get; set; }
+    public float BestProgress { get; set; }
 
     public Individual(Problem problem)
     {
@@ -15,7 +13,15 @@ public class Individual
         {
             Chromosome[i] = UnityEngine.Random.Range(problem.MinValue, problem.MaxValue);
         }
-        Cost = problem.CostFunction(Chromosome);
+        Cost = problem.CostFunction(this);
+        BestProgress = 0f; // Initialise to zero
+    }
+
+    public Individual(Individual other)
+    {
+        Chromosome = other.Chromosome.ToArray();
+        Cost = other.Cost;
+        BestProgress = other.BestProgress; // Copy BestProgress
     }
 
     public void Mutate(float rateOfGeneMutation, float rangeOfGeneMutation)
@@ -24,7 +30,7 @@ public class Individual
         {
             if (UnityEngine.Random.value < rateOfGeneMutation)
             {
-                Chromosome[i] += (float)(UnityEngine.Random.Range(-1f, 1f) * rangeOfGeneMutation);
+                Chromosome[i] += UnityEngine.Random.Range(-rangeOfGeneMutation, rangeOfGeneMutation);
             }
         }
     }
@@ -42,11 +48,5 @@ public class Individual
         }
 
         return (child1, child2);
-    }
-
-    public Individual(Individual other)
-    {
-        Chromosome = other.Chromosome.ToArray();
-        Cost = other.Cost;
     }
 }

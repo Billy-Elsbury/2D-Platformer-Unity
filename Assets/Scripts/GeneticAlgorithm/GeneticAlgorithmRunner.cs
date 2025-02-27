@@ -18,7 +18,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
         gm = GameManager.instance;
         simulationTime = 90;
 
-        int numberOfGenes = 60; // Size of overall array for movement (must be divisible byof 3)
+        int numberOfGenes = 60; // Size of overall array for movement (must be divisible by 3)
         if (numberOfGenes % 3 != 0)
         {
             Debug.LogError("numberOfGenes must be divisible by 3. will round down.");
@@ -30,18 +30,21 @@ public class GeneticAlgorithmRunner : MonoBehaviour
             minValue: 0,
             maxValue: 10,
             costFunction: FitnessFunction,
-            maxAcceptedCost: 1000f, //Best would be finish level wiht fast time
+            maxAcceptedCost: 1000f, // Best would be finish level with fast time
             player: player
         );
 
         parameters = new Parameters(
-            populationSize: 4,
+            populationSize: 50,
             birthRatePerGeneration: 1,
             exploreCrossoverRange: 0.2f,
             geneMutationRate: 0.2f,
             geneMutationRange: 0.5f,
-            maxNumberOfGenerations: 5
+            maxNumberOfGenerations: 10
         );
+
+        // Initialize bestSolution with a default value
+        bestSolution = new Individual(problem) { Cost = float.MinValue };
 
         // Start genetic algorithm
         StartCoroutine(RunGeneticAlgorithm());
@@ -52,7 +55,6 @@ public class GeneticAlgorithmRunner : MonoBehaviour
         Debug.Log("Starting Genetic Algorithm:");
 
         List<Individual> population = new List<Individual>();
-        Individual bestSolution = new Individual(problem) { Cost = float.MinValue };
 
         // Initialise population
         for (int i = 0; i < parameters.PopulationSize; i++)
@@ -73,16 +75,17 @@ public class GeneticAlgorithmRunner : MonoBehaviour
             {
                 Debug.Log($"[Generation {generation + 1}] Evaluating Individual {i + 1}/{population.Count}");
                 yield return StartCoroutine(SimulateIndividual(population[i]));
-                population[i].Cost = problem.CostFunction(population[i].Chromosome);
+                population[i].Cost = problem.CostFunction(population[i]);
             }
 
             // Population by cost (higher cost = better)
             population = population.OrderByDescending(ind => ind.Cost).ToList();
 
+            // Check if the current best solution is better than the stored best solution
             if (population[0].Cost > bestSolution.Cost)
             {
-                bestSolution = new Individual(population[0]);
-                Debug.Log($"[Generation {generation + 1}] New best solution found with cost {bestSolution.Cost}");
+                StoreBestSolution(population[0]);
+                Debug.Log($"[Generation {generation + 1}] New best solution found with fitness {bestSolution.Cost}");
             }
 
             // Create next generation
@@ -99,7 +102,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
                 Individual parent1 = SelectParent(population);
                 Individual parent2 = SelectParent(population);
 
-                //Ensure parents are different
+                // Ensure parents are different
                 while (parent1 == parent2)
                 {
                     parent2 = SelectParent(population);
@@ -114,10 +117,9 @@ public class GeneticAlgorithmRunner : MonoBehaviour
             }
             nextGeneration.AddRange(children);
 
-            
             while (nextGeneration.Count < parameters.PopulationSize)
             {
-                // Fill remaining with tournement style selection
+                // Fill remaining with tournament style selection
                 nextGeneration.Add(SelectParent(population));
             }
 
@@ -132,13 +134,14 @@ public class GeneticAlgorithmRunner : MonoBehaviour
 
     internal Individual bestSolution;
 
-
     private void StoreBestSolution(Individual solution)
     {
-        bestSolution = solution;
-        Debug.Log("Best solution stored for playback.");
+        if (solution.Cost > bestSolution.Cost)
+        {
+            bestSolution = new Individual(solution);
+            Debug.Log($"Best solution stored with fitness: {bestSolution.Cost}");
+        }
     }
-
 
     private IEnumerator SimulateIndividual(Individual individual)
     {
@@ -157,6 +160,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
         };
 
         // Simulate player behavior
+        float bestProgress = player.transform.position.x; // Track the best progress
         float startTime = Time.time;
         while (Time.time - startTime < simulationTime)
         {
@@ -174,13 +178,20 @@ public class GeneticAlgorithmRunner : MonoBehaviour
                 Debug.Log($"Simulation Stopped. Goal Reached at {Time.time - startTime} seconds.");
                 break;
             }
+
+            // Update best progress
+            if (player.transform.position.x > bestProgress)
+            {
+                bestProgress = player.transform.position.x;
+            }
         }
+
+        individual.BestProgress = bestProgress;
 
         Debug.Log($"Simulation complete. Chromosome: {string.Join(", ", individual.Chromosome)}");
     }
 
-
-    // Tournement style selection of parent
+    // Tournament style selection of parent
     private Individual SelectParent(List<Individual> population)
     {
         const int TOURNAMENT_SIZE = 3;
@@ -207,18 +218,14 @@ public class GeneticAlgorithmRunner : MonoBehaviour
         return best;
     }
 
-    private float FitnessFunction(float[] chromosome)
+    private float FitnessFunction(Individual individual)
     {
-        // Progress reward: More right is better
-        float progressReward = player.transform.position.x;
-
-        // Coin bonus: More coins is better
-        //float coinBonus = gm.coinCount * 5f; // Adjust multiplier as needed
+        float progressReward = individual.BestProgress; // Use the individual's best progress
 
         // Goal bonus: Big reward for reaching the goal
         float goalBonus = gm.reachedGoal ? 10000f : 0f;
 
-        // Death penalty: Ideally dying earlier is worse than dying later
+        // Death penalty: Ideally, dying earlier is worse than dying later
         float deathPenalty = gm.wasDeadThisRun ? -50f * (1 - (gm.gameTimer / simulationTime)) : 0f;
 
         // Combined fitness
