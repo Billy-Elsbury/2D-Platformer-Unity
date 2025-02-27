@@ -7,53 +7,60 @@ public enum Controls { mobile, pc, AI }
 
 public class PlayerController : MonoBehaviour
 {
+    public Chromosome InputChromosome { get; set; }
+    public Controls controlmode;
+    public bool isPaused = false;
+
     public float moveSpeed = 5f;
     public float jumpForce = 10f;
-    public float doubleJumpForce = 8f;
     public LayerMask groundLayer;
     public Transform groundCheck;
 
-    private Rigidbody2D rb;
+    //player variables
     public bool isGroundedBool = false;
-    public Chromosome InputChromosome { get; set; } // Chromosome for AI control
-    public Animator playeranim;
-    float gameTime = 0;
-    public Controls controlmode;
-
+    internal bool isDead = false;
+    internal float gameTime = 0;
     private float moveX;
-    public bool isPaused = false;
-
-    public ParticleSystem footsteps;
-    private ParticleSystem.EmissionModule footEmissions;
-
-    public ParticleSystem ImpactEffect;
     private bool wasonGround;
+
+    public Animator playeranim;
+
+    public Vector3 startPosition;
+    private Rigidbody2D rb;
+    private GameManager gm;
+
+    private void Awake()
+    {
+        startPosition = transform.position;
+    }
 
     private void Start()
     {
+        gm = GameManager.instance;
+
+        
         rb = GetComponent<Rigidbody2D>();
-        footEmissions = footsteps.emission;
 
         if (controlmode == Controls.mobile)
         {
             UIManager.instance.EnableMobileControls();
         }
-
-        Chromosome chromosome = new Chromosome();
-        chromosome.LeftTime = new List<float> { 0.5f, 2.0f, 3.0f }; // Example left movement timings
-        chromosome.RightTime = new List<float> { 15.5f, 25.5f, 40.0f }; // Example right movement timings
-        chromosome.JumpTime = new List<float> { 1.2f, 2.2f }; // Example jump timings
-
-        PlayerController player = FindObjectOfType<PlayerController>();
-        player.InputChromosome = chromosome;
-        //player.controlmode = Controls.AI;
     }
 
-    private void Update()
+    public void Update()
     {
         gameTime += Time.deltaTime;
 
-        // Get movement input from the chromosome (AI control)
+        // Update animations and sprite flipping
+        SetAnimations();
+        if (moveX != 0)
+        {
+            FlipSprite(moveX);
+        }
+    }
+
+    private void FixedUpdate()
+    {
         if (controlmode == Controls.AI && InputChromosome != null)
         {
             moveX = InputChromosome.UpdateX(gameTime);
@@ -64,6 +71,7 @@ public class PlayerController : MonoBehaviour
                 Jump(jumpForce);
             }
         }
+
         else if (controlmode == Controls.pc)
         {
             // Get movement input from the player (keyboard/controller)
@@ -75,19 +83,9 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        // Update animations and sprite flipping
-        SetAnimations();
-        if (moveX != 0)
-        {
-            FlipSprite(moveX);
-        }
-
         wasonGround = isGroundedBool;
         isGroundedBool = IsGrounded();
-    }
 
-    private void FixedUpdate()
-    {
         // Apply movement to the Rigidbody2D
         rb.velocity = new Vector2(moveX * moveSpeed, rb.velocity.y);
     }
@@ -134,12 +132,45 @@ public class PlayerController : MonoBehaviour
             transform.localScale = new Vector3(-1, 1, 1);
         }
     }
-
     private void OnCollisionEnter2D(Collision2D collision)
     {
-        if (collision.gameObject.tag == "killzone")
+        if (collision.gameObject.CompareTag("killzone"))
         {
-            GameManager.instance.Death();
+            DieAndReset();
         }
+    }
+
+    private void DieAndReset()
+    {
+        Debug.Log("Death");
+        isDead = true;
+        gm.wasDeadThisRun = true;  // Mark death for this simulation
+        ResetPlayer();
+        gm.ResetGameState();  // Reset state, but don't erase wasDeadThisRun
+    }
+
+
+
+    public void ResetPlayer()
+    {
+        // Reset position and velocity
+        transform.position = startPosition;
+        if (rb != null)
+        {
+            rb.velocity = Vector2.zero; // Reset velocity
+            rb.angularVelocity = 0f; // Reset angular velocity (if applicable)
+        }
+
+        // Reset state variables
+        gameTime = 0f;
+        isGroundedBool = false;
+        moveX = 0f;
+        wasonGround = false;
+        isDead = false;
+
+        // Reset chromosome (if applicable)
+        InputChromosome = null;
+
+        Debug.Log("Player reset");
     }
 }

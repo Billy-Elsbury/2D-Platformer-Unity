@@ -24,7 +24,7 @@ public class GeneticAlgorithm
         for (int i = 0; i < numberInPopulation; i++)
         {
             Individual newIndividual = new Individual(problem);
-            if (newIndividual.Cost < bestSolution.Cost)
+            if (newIndividual.Cost > bestSolution.Cost)
             {
                 bestSolution = new Individual(newIndividual);
             }
@@ -60,7 +60,8 @@ public class GeneticAlgorithm
             }
 
             population.AddRange(children);
-            population = population.OrderBy(ind => ind.Cost).Take(numberInPopulation).ToList();
+
+            population = population.OrderByDescending(ind => ind.Cost).Take(numberInPopulation).ToList();
 
             if (population[0].Cost < bestSolution.Cost)
             {

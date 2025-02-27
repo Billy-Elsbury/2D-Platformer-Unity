@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 public class Problem
 {
@@ -8,13 +9,15 @@ public class Problem
     public float MaxValue { get; private set; }
     public Func<float[], float> CostFunction { get; private set; }
     public float MaxAcceptedCost { get; private set; }
+    public PlayerController Player { get; private set; }
 
-    public Problem(int numberOfGenes, float minValue, float maxValue, Func<float[], float> costFunction, float maxAcceptedCost)
+    public Problem(int numberOfGenes, float minValue, float maxValue, Func<float[], float> costFunction, float maxAcceptedCost, PlayerController player)
     {
         NumberOfGenes = numberOfGenes;
         MinValue = minValue;
         MaxValue = maxValue;
         CostFunction = costFunction;
         MaxAcceptedCost = maxAcceptedCost;
+        Player = player;
     }
 }

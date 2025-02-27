@@ -1,40 +1,230 @@
 using UnityEngine;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 
 public class GeneticAlgorithmRunner : MonoBehaviour
 {
-    void Start()
+    public PlayerController player;
+    public Vector3 startPosition;
+    public int simulationTime;
+
+    private Problem problem;
+    private Parameters parameters;
+    private GameManager gm;
+
+    private void Start()
     {
-        Problem problem = new Problem(
-            numberOfGenes: 8,
-            minValue: -10,
+        gm = GameManager.instance;
+        simulationTime = 90;
+
+        int numberOfGenes = 60; // Size of overall array for movement (must be divisible byof 3)
+        if (numberOfGenes % 3 != 0)
+        {
+            Debug.LogError("numberOfGenes must be divisible by 3. will round down.");
+            numberOfGenes = (numberOfGenes / 3) * 3; // Round down to the nearest multiple of 3
+        }
+
+        problem = new Problem(
+            numberOfGenes: numberOfGenes,
+            minValue: 0,
             maxValue: 10,
-            costFunction: SphereFunction,
-            maxAcceptedCost: 0.001f
+            costFunction: FitnessFunction,
+            maxAcceptedCost: 1000f, //Best would be finish level wiht fast time
+            player: player
         );
 
-        Parameters parameters = new Parameters(
-            populationSize: 1000,
+        parameters = new Parameters(
+            populationSize: 4,
             birthRatePerGeneration: 1,
             exploreCrossoverRange: 0.2f,
             geneMutationRate: 0.2f,
             geneMutationRange: 0.5f,
-            maxNumberOfGenerations: 1000
+            maxNumberOfGenerations: 5
         );
 
-        GeneticAlgorithm ga = new GeneticAlgorithm();
-        var (population, bestSolution) = ga.RunGenetic(problem, parameters);
-
-        Debug.Log("Best Solution Chromosome: " + string.Join(", ", bestSolution.Chromosome));
-        Debug.Log("Best Solution Cost: " + bestSolution.Cost);
+        // Start genetic algorithm
+        StartCoroutine(RunGeneticAlgorithm());
     }
 
-    private float SphereFunction(float[] x)
+    private IEnumerator RunGeneticAlgorithm()
     {
-        float total = 0;
-        foreach (float value in x)
+        Debug.Log("Starting Genetic Algorithm:");
+
+        List<Individual> population = new List<Individual>();
+        Individual bestSolution = new Individual(problem) { Cost = float.MinValue };
+
+        // Initialise population
+        for (int i = 0; i < parameters.PopulationSize; i++)
         {
-            total += value * value;
+            Individual newIndividual = new Individual(problem);
+            population.Add(newIndividual);
+            Debug.Log($"[Generation 0] Created individual {i + 1} with chromosome: {string.Join(", ", newIndividual.Chromosome)}");
         }
-        return total;
+
+        // Run generations
+        for (int generation = 0; generation < parameters.MaxNumberOfGenerations; generation++)
+        {
+            Debug.Log($"===== Starting Generation {generation + 1}/{parameters.MaxNumberOfGenerations} =====");
+            Debug.Log($"Current Population Size: {population.Count}");
+
+            // Fitness for each individual
+            for (int i = 0; i < population.Count; i++)
+            {
+                Debug.Log($"[Generation {generation + 1}] Evaluating Individual {i + 1}/{population.Count}");
+                yield return StartCoroutine(SimulateIndividual(population[i]));
+                population[i].Cost = problem.CostFunction(population[i].Chromosome);
+            }
+
+            // Population by cost (higher cost = better)
+            population = population.OrderByDescending(ind => ind.Cost).ToList();
+
+            if (population[0].Cost > bestSolution.Cost)
+            {
+                bestSolution = new Individual(population[0]);
+                Debug.Log($"[Generation {generation + 1}] New best solution found with cost {bestSolution.Cost}");
+            }
+
+            // Create next generation
+            List<Individual> nextGeneration = new List<Individual>();
+
+            // Add elites - top 10%
+            int eliteCount = Mathf.FloorToInt(parameters.PopulationSize * 0.1f);
+            nextGeneration.AddRange(population.Take(eliteCount));
+
+            // Add children
+            List<Individual> children = new List<Individual>();
+            while (children.Count < parameters.PopulationSize * parameters.BirthRatePerGeneration)
+            {
+                Individual parent1 = SelectParent(population);
+                Individual parent2 = SelectParent(population);
+
+                //Ensure parents are different
+                while (parent1 == parent2)
+                {
+                    parent2 = SelectParent(population);
+                }
+
+                (Individual child1, Individual child2) = parent1.Crossover(parent2, parameters.ExploreCrossoverRange);
+                child1.Mutate(parameters.GeneMutationRate, parameters.GeneMutationRange);
+                child2.Mutate(parameters.GeneMutationRate, parameters.GeneMutationRange);
+
+                children.Add(child1);
+                children.Add(child2);
+            }
+            nextGeneration.AddRange(children);
+
+            
+            while (nextGeneration.Count < parameters.PopulationSize)
+            {
+                // Fill remaining with tournement style selection
+                nextGeneration.Add(SelectParent(population));
+            }
+
+            population = nextGeneration.OrderByDescending(ind => ind.Cost).Take(parameters.PopulationSize).ToList();
+
+            Debug.Log($"===== End of Generation {generation + 1} | Best Cost: {bestSolution.Cost} =====");
+        }
+
+        Debug.Log("Genetic Algorithm Complete!");
+        StoreBestSolution(bestSolution);
+    }
+
+    internal Individual bestSolution;
+
+
+    private void StoreBestSolution(Individual solution)
+    {
+        bestSolution = solution;
+        Debug.Log("Best solution stored for playback.");
+    }
+
+
+    private IEnumerator SimulateIndividual(Individual individual)
+    {
+        gm.wasDeadThisRun = false;  // Reset death before starting simulation
+        gm.ResetGameState();
+        player.ResetPlayer();
+
+        // Assign chromosome
+        int geneCount = individual.Chromosome.Length;
+        int splitPoint = geneCount / 3;
+        player.InputChromosome = new Chromosome
+        {
+            LeftTime = individual.Chromosome.Take(splitPoint).ToList(),
+            RightTime = individual.Chromosome.Skip(splitPoint).Take(splitPoint).ToList(),
+            JumpTime = individual.Chromosome.Skip(2 * splitPoint).Take(splitPoint).ToList()
+        };
+
+        // Simulate player behavior
+        float startTime = Time.time;
+        while (Time.time - startTime < simulationTime)
+        {
+            yield return new WaitForFixedUpdate(); // Attempt to ensure accurate physics
+
+            if (player.isDead)
+            {
+                gm.wasDeadThisRun = true;
+                Debug.Log($"Simulation Stopped. Death at {Time.time - startTime} seconds.");
+                break;
+            }
+
+            if (gm.reachedGoal)
+            {
+                Debug.Log($"Simulation Stopped. Goal Reached at {Time.time - startTime} seconds.");
+                break;
+            }
+        }
+
+        Debug.Log($"Simulation complete. Chromosome: {string.Join(", ", individual.Chromosome)}");
+    }
+
+
+    // Tournement style selection of parent
+    private Individual SelectParent(List<Individual> population)
+    {
+        const int TOURNAMENT_SIZE = 3;
+        Individual best = null;
+        HashSet<int> selectedIndices = new HashSet<int>();
+
+        for (int i = 0; i < TOURNAMENT_SIZE; i++)
+        {
+            int randomIndex;
+            do
+            {
+                randomIndex = UnityEngine.Random.Range(0, population.Count);
+            } while (selectedIndices.Contains(randomIndex));
+
+            selectedIndices.Add(randomIndex);
+            Individual contender = population[randomIndex];
+
+            if (best == null || contender.Cost > best.Cost)
+            {
+                best = contender;
+            }
+        }
+
+        return best;
+    }
+
+    private float FitnessFunction(float[] chromosome)
+    {
+        // Progress reward: More right is better
+        float progressReward = player.transform.position.x;
+
+        // Coin bonus: More coins is better
+        //float coinBonus = gm.coinCount * 5f; // Adjust multiplier as needed
+
+        // Goal bonus: Big reward for reaching the goal
+        float goalBonus = gm.reachedGoal ? 10000f : 0f;
+
+        // Death penalty: Ideally dying earlier is worse than dying later
+        float deathPenalty = gm.wasDeadThisRun ? -50f * (1 - (gm.gameTimer / simulationTime)) : 0f;
+
+        // Combined fitness
+        float fitness = progressReward + goalBonus + deathPenalty;
+
+        Debug.Log($"Fitness: Progress={progressReward}, Goal={goalBonus}, Death={deathPenalty}, Total={fitness}");
+        return fitness;
     }
 }

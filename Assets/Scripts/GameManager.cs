@@ -10,33 +10,37 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager instance;
 
-
+    // UI
     [SerializeField] private TMP_Text coinText;
     [SerializeField] private TMP_Text timerText;
 
+    [SerializeField] private GameObject levelCompletePanel;
+    [SerializeField] private TMP_Text leveCompletePanelTitle;
+    [SerializeField] private TMP_Text levelCompleteCoins;
+    [SerializeField] private TMP_Text levelCompleteTime;
 
+    // Player
     [SerializeField] private PlayerController playerController;
-
-    private int coinCount = 0;
-    private bool isGameOver = false;
     private Vector3 playerPosition;
 
-    //Level Complete
+    internal bool isGameOver = false;
+    internal bool reachedGoal = false;
+    internal bool wasDeadThisRun = false;
 
-    [SerializeField] GameObject levelCompletePanel;
-    [SerializeField] TMP_Text leveCompletePanelTitle;
-    [SerializeField] TMP_Text levelCompleteCoins;
-    [SerializeField] TMP_Text levelCompleteTime;
+    // Game Stats
+    internal int coinCount = 0;
+    internal int totalCoins = 0;
+    internal float gameTimer = 0f;
 
-
-    private int totalCoins = 0;
-    private float gameTimer = 0f;
+    // Runtime Performance 
+    private int gameSpeed = 50;
+    private int frameRate = 60;
 
     private void Awake()
     {
 
         instance = this;
-        Application.targetFrameRate = 60;
+        Application.targetFrameRate = frameRate;
     }
 
     private void Start()
@@ -47,7 +51,7 @@ public class GameManager : MonoBehaviour
 
         FindTotalPickups();
 
-        //Time.timeScale = 4.0f;
+        Time.timeScale = gameSpeed;
     }
 
 
@@ -70,31 +74,14 @@ public class GameManager : MonoBehaviour
         
     }
 
-    public void Death()
+    public void ResetGameState()
     {
-        if (!isGameOver)
-        {
-            // Disable Mobile Controls
-            UIManager.instance.DisableMobileControls();
-            // Initiate screen fade
-            UIManager.instance.fadeToBlack = true;
-
-            // Disable the player object
-            playerController.gameObject.SetActive(false);
-
-            // Start death coroutine to wait and then respawn the player
-            StartCoroutine(DeathCoroutine());
-
-            // Update game state
-            isGameOver = true;
-
-            // Log death message
-            Debug.Log("Died");
-
-            gameTimer = 0f;
-        }
+        gameTimer = 0f;
+        isGameOver = false;
+        reachedGoal = false;
+        coinCount = 0;
     }
- 
+
     public void FindTotalPickups()
     {
         pickup[] pickups = GameObject.FindObjectsOfType<pickup>();
@@ -110,24 +97,10 @@ public class GameManager : MonoBehaviour
 
     public void LevelComplete()
     {
+        reachedGoal = true;
         levelCompletePanel.SetActive(true);
         leveCompletePanelTitle.text = "LEVEL COMPLETE";
         levelCompleteCoins.text = "COINS COLLECTED: "+ coinCount.ToString() +" / " + totalCoins.ToString();
         levelCompleteTime.text = "Time Taken: " + gameTimer.ToString("F2");
-    }
-   
-    public IEnumerator DeathCoroutine()
-    {
-        yield return new WaitForSeconds(1f);
-        playerController.transform.position = playerPosition;
-
-        // Wait for 2 seconds
-        yield return new WaitForSeconds(1f);
-
-        // Check if the game is still over (in case player respawns earlier)
-        if (isGameOver)
-        {
-            SceneManager.LoadScene(1); 
-        }
     }
 }
