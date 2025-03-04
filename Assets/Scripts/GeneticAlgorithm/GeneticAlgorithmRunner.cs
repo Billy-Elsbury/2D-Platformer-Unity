@@ -16,7 +16,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
     private void Start()
     {
         gm = GameManager.instance;
-        simulationTime = 90;
+        simulationTime = 30;
 
         int numberOfGenes = 60; // Size of overall array for movement (must be divisible by 3)
         if (numberOfGenes % 3 != 0)
@@ -38,8 +38,8 @@ public class GeneticAlgorithmRunner : MonoBehaviour
             populationSize: 50,
             birthRatePerGeneration: 1,
             exploreCrossoverRange: 0.2f,
-            geneMutationRate: 0.2f,
-            geneMutationRange: 0.5f,
+            geneMutationRate: 0.1f,
+            geneMutationRange: 0.3f,
             maxNumberOfGenerations: 10
         );
 
@@ -149,22 +149,34 @@ public class GeneticAlgorithmRunner : MonoBehaviour
         gm.ResetGameState();
         player.ResetPlayer();
 
-        // Assign chromosome
+        // Assign chromosome with a new split (60% Right, 30% Jump, 10% Left)
         int geneCount = individual.Chromosome.Length;
-        int splitPoint = geneCount / 3;
+        int rightSplit = Mathf.FloorToInt(geneCount * 0.6f);
+        int jumpSplit = Mathf.FloorToInt(geneCount * 0.3f);
+        int leftSplit = geneCount - (rightSplit + jumpSplit); // Remaining genes for Left
+
+        // Round values to two decimal places for consistency
+        List<float> roundedChromosome = individual.Chromosome
+            .Select(gene => Mathf.Round(gene * 100f) / 100f)
+            .ToList();
+
         player.InputChromosome = new Chromosome
         {
-            LeftTime = individual.Chromosome.Take(splitPoint).ToList(),
-            RightTime = individual.Chromosome.Skip(splitPoint).Take(splitPoint).ToList(),
-            JumpTime = individual.Chromosome.Skip(2 * splitPoint).Take(splitPoint).ToList()
+            RightTime = roundedChromosome.Take(rightSplit).ToList(),
+            JumpTime = roundedChromosome.Skip(rightSplit).Take(jumpSplit).ToList(),
+            LeftTime = roundedChromosome.Skip(rightSplit + jumpSplit).ToList()
         };
 
-        // Simulate player behavior
-        float bestProgress = player.transform.position.x; // Track the best progress
+        // Wait until the player has stopped moving significantly before starting the timer
+        yield return new WaitUntil(() => player.GetComponent<Rigidbody2D>().velocity.magnitude < 0.01f);
+
+        // Now that the player is ready, start the simulation timer
+        float bestProgress = player.transform.position.x;
         float startTime = Time.time;
+
         while (Time.time - startTime < simulationTime)
         {
-            yield return new WaitForFixedUpdate(); // Attempt to ensure accurate physics
+            yield return new WaitForFixedUpdate();
 
             if (player.isDead)
             {
@@ -188,8 +200,10 @@ public class GeneticAlgorithmRunner : MonoBehaviour
 
         individual.BestProgress = bestProgress;
 
-        Debug.Log($"Simulation complete. Chromosome: {string.Join(", ", individual.Chromosome)}");
+        Debug.Log($"Simulation complete. Chromosome: {string.Join(", ", roundedChromosome)}");
     }
+
+
 
     // Tournament style selection of parent
     private Individual SelectParent(List<Individual> population)
@@ -220,24 +234,24 @@ public class GeneticAlgorithmRunner : MonoBehaviour
 
     private float FitnessFunction(Individual individual)
     {
-        float progressReward = individual.BestProgress; // Reward for distance travelled
+        float progressReward = individual.BestProgress; // Reward for progress
 
-        // Bonus if past x = 47 (first jump cleared)
-        float firstJumpBonus = (individual.BestProgress >= 47f) ? 100f : 0f;
+        // Goal bonus: Reward reaching the goal and favour faster times
+        float goalBonus = gm.reachedGoal ? (10000f - gm.gameTimer * 500f) : 0f;
 
-        // Goal reward: Higher reward for faster completion
-        float goalBonus = 0f;
-        if (gm.reachedGoal)
-        {
-            float timeTaken = gm.gameTimer;
-            goalBonus = 10000f * (1f - (timeTaken / simulationTime)); // More reward for faster completion
-        }
+        // Ensure that reaching the goal is always positive
+        if (goalBonus < 0) goalBonus = 0;
+
+        // Reward making it past 47X
+        float milestoneBonus = individual.BestProgress > 47f ? 5000f : 0f;
+
+        // Death penalty: Avoid early deaths
+        float deathPenalty = gm.wasDeadThisRun ? -50f * (1 - (gm.gameTimer / simulationTime)) : 0f;
 
         // Final fitness score
-        float fitness = progressReward + firstJumpBonus + goalBonus;
+        float fitness = progressReward + goalBonus + milestoneBonus + deathPenalty;
 
-        Debug.Log($"Fitness: Progress={progressReward}, FirstJumpBonus={firstJumpBonus}, GoalBonus={goalBonus}, Total={fitness}");
+        Debug.Log($"Fitness: Progress={progressReward}, Goal={goalBonus}, Milestone={milestoneBonus}, Death={deathPenalty}, Total={fitness}");
         return fitness;
     }
-
 }

@@ -499,7 +499,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2343685742142402085, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: gameSpeed
-      value: 50
+      value: 15
       objectReference: {fileID: 0}
     - target: {fileID: 4221805464409947186, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: m_IsActive
@@ -511,11 +511,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4711758305482697344, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 6.53666
+      value: 2.7151709
       objectReference: {fileID: 0}
     - target: {fileID: 4711758305482697344, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.7205768
+      value: -2.7054467
       objectReference: {fileID: 0}
     - target: {fileID: 6567187699723376313, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: controlmode

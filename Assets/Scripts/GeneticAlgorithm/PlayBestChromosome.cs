@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -30,19 +31,29 @@ public class PlayBestChromosome : MonoBehaviour
             player.ResetPlayer();
             GameManager.instance.ResetGameState();
 
-            // Dynamically split the chromosome into LeftTime, RightTime, and JumpTime
+            // Dynamically split the chromosome with updated ratio (Right: 60%, Jump: 30%, Left: 10%)
             int geneCount = gar.bestSolution.Chromosome.Length;
-            int splitPoint = geneCount / 3;
+            int rightSplit = Mathf.FloorToInt(geneCount * 0.6f);
+            int jumpSplit = Mathf.FloorToInt(geneCount * 0.3f);
+            int leftSplit = geneCount - (rightSplit + jumpSplit); // Remaining genes for Left
+
+            // Round values to two decimal places for consistency
+            List<float> roundedChromosome = gar.bestSolution.Chromosome
+                .Select(gene => Mathf.Round(gene * 100f) / 100f)
+                .ToList();
 
             // Assign the best chromosome to the player
             player.InputChromosome = new Chromosome
             {
-                LeftTime = gar.bestSolution.Chromosome.Take(splitPoint).ToList(),
-                RightTime = gar.bestSolution.Chromosome.Skip(splitPoint).Take(splitPoint).ToList(),
-                JumpTime = gar.bestSolution.Chromosome.Skip(2 * splitPoint).Take(splitPoint).ToList()
+                RightTime = roundedChromosome.Take(rightSplit).ToList(),
+                JumpTime = roundedChromosome.Skip(rightSplit).Take(jumpSplit).ToList(),
+                LeftTime = roundedChromosome.Skip(rightSplit + jumpSplit).ToList()
             };
 
-            Debug.Log($"Assigned chromosome to player: LeftTime={string.Join(", ", player.InputChromosome.LeftTime)}, RightTime={string.Join(", ", player.InputChromosome.RightTime)}, JumpTime={string.Join(", ", player.InputChromosome.JumpTime)}");
+            Debug.Log($"Assigned chromosome to player: " +
+                      $"RightTime={string.Join(", ", player.InputChromosome.RightTime)}\n" +
+                      $"JumpTime={string.Join(", ", player.InputChromosome.JumpTime)}\n" +
+                      $"LeftTime={string.Join(", ", player.InputChromosome.LeftTime)}");
 
             // Set the player to AI control mode
             player.controlmode = Controls.AI;
