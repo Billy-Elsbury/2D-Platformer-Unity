@@ -1,4 +1,5 @@
 using System.Linq;
+using UnityEngine;
 
 public class Individual
 {
@@ -28,11 +29,21 @@ public class Individual
     {
         for (int i = 0; i < Chromosome.Length; i++)
         {
-            if (UnityEngine.Random.value < rateOfGeneMutation)
+            if (Random.value < rateOfGeneMutation)
             {
-                Chromosome[i] += UnityEngine.Random.Range(-rangeOfGeneMutation, rangeOfGeneMutation);
+                Chromosome[i] += (rangeOfGeneMutation * NextStandardNormal());
+                
             }
         }
+    }
+
+    public float NextStandardNormal()
+    {
+        //ChatGPT
+        float u1 = Random.value; // Uniform(0,1] random number
+        float u2 = Random.value;
+        float z = Mathf.Sqrt(-2.0f * Mathf.Log(u1)) * Mathf.Cos(2.0f * Mathf.PI * u2);
+        return z; // Standard normal distribution (mean = 0, std dev = 1)
     }
 
     public (Individual, Individual) Crossover(Individual parent2, float exploreCrossover)

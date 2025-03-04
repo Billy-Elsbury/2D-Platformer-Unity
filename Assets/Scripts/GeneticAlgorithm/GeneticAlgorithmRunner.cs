@@ -220,18 +220,24 @@ public class GeneticAlgorithmRunner : MonoBehaviour
 
     private float FitnessFunction(Individual individual)
     {
-        float progressReward = individual.BestProgress; // Use the individual's best progress
+        float progressReward = individual.BestProgress; // Reward for distance travelled
 
-        // Goal bonus: Big reward for reaching the goal
-        float goalBonus = gm.reachedGoal ? 10000f : 0f;
+        // Bonus if past x = 47 (first jump cleared)
+        float firstJumpBonus = (individual.BestProgress >= 47f) ? 100f : 0f;
 
-        // Death penalty: Ideally, dying earlier is worse than dying later
-        float deathPenalty = gm.wasDeadThisRun ? -50f * (1 - (gm.gameTimer / simulationTime)) : 0f;
+        // Goal reward: Higher reward for faster completion
+        float goalBonus = 0f;
+        if (gm.reachedGoal)
+        {
+            float timeTaken = gm.gameTimer;
+            goalBonus = 10000f * (1f - (timeTaken / simulationTime)); // More reward for faster completion
+        }
 
-        // Combined fitness
-        float fitness = progressReward + goalBonus + deathPenalty;
+        // Final fitness score
+        float fitness = progressReward + firstJumpBonus + goalBonus;
 
-        Debug.Log($"Fitness: Progress={progressReward}, Goal={goalBonus}, Death={deathPenalty}, Total={fitness}");
+        Debug.Log($"Fitness: Progress={progressReward}, FirstJumpBonus={firstJumpBonus}, GoalBonus={goalBonus}, Total={fitness}");
         return fitness;
     }
+
 }
