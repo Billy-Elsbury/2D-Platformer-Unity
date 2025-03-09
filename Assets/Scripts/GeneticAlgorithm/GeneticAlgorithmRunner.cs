@@ -16,7 +16,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
     private void Start()
     {
         gm = GameManager.instance;
-        simulationTime = 30;
+        simulationTime = 40;
 
         int numberOfGenes = 60; // Size of overall array for movement (must be divisible by 3)
         if (numberOfGenes % 3 != 0)
@@ -35,12 +35,12 @@ public class GeneticAlgorithmRunner : MonoBehaviour
         );
 
         parameters = new Parameters(
-            populationSize: 50,
+            populationSize: 100,
             birthRatePerGeneration: 1,
             exploreCrossoverRange: 0.2f,
             geneMutationRate: 0.1f,
             geneMutationRange: 0.3f,
-            maxNumberOfGenerations: 10
+            maxNumberOfGenerations: 20
         );
 
         // Initialize bestSolution with a default value
@@ -231,7 +231,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
 
     private float FitnessFunction(Individual individual)
     {
-        const float GOAL_REWARD_BASE = 100000f;   // Base reward for reaching the goal
+        const float GOAL_REWARD_BASE = 100000f;  // Base reward for reaching the goal
         const float TIME_PENALTY_SCALE = 500f;   // Scaling factor for time-based penalty
         const float MILESTONE_X_POSITION = 47f;  // X position milestone for bonus
         const float MILESTONE_REWARD = 5000f;    // Reward for passing the milestone
