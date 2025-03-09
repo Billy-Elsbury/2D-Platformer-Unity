@@ -30,7 +30,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
             minValue: 0,
             maxValue: 10,
             costFunction: FitnessFunction,
-            maxAcceptedCost: 1000f, // Best would be finish level with fast time
+            maxAcceptedCost: 100000f, // Best would be finish level with fast time
             player: player
         );
 
@@ -149,7 +149,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
         gm.ResetGameState();
         player.ResetPlayer();
 
-        // Assign chromosome with a new split (60% Right, 30% Jump, 10% Left)
+        // Assign chromosome with split
         int geneCount = individual.Chromosome.Length;
         int rightSplit = Mathf.FloorToInt(geneCount * 0.6f);
         int jumpSplit = Mathf.FloorToInt(geneCount * 0.3f);
@@ -231,25 +231,25 @@ public class GeneticAlgorithmRunner : MonoBehaviour
 
     private float FitnessFunction(Individual individual)
     {
-        const float GOAL_REWARD_BASE = 100000f;  // Base reward for reaching the goal
+        const float GOAL_REWARD_BASE = 100000f;  // Base reward for reaching goal
         const float TIME_PENALTY_SCALE = 500f;   // Scaling factor for time-based penalty
         const float MILESTONE_X_POSITION = 47f;  // X position milestone for bonus
-        const float MILESTONE_REWARD = 5000f;    // Reward for passing the milestone
+        const float MILESTONE_REWARD = 5000f;    // Reward for passing milestone
         const float DEATH_PENALTY_BASE = -50f;   // Base penalty for dying
         const float DEATH_PENALTY_SCALE = 1f;    // Scale factor for death penalty
 
         float progressReward = individual.BestProgress;
 
-        // Goal bonus: Reward reaching the goal and favour faster times
+        // Goal bonus: Reward reaching goal and favour faster times
         float goalBonus = gm.reachedGoal ? (GOAL_REWARD_BASE - gm.gameTimer * TIME_PENALTY_SCALE) : 0f;
 
-        // Ensure that reaching the goal always results in a positive bonus
+        // Ensure reaching goal always results in a positive bonus
         goalBonus = Mathf.Max(goalBonus, 0);
 
-        // Milestone bonus: Reward for passing a key progress point
+        // Milestone bonus: Reward for passing key progress point
         float milestoneBonus = individual.BestProgress > MILESTONE_X_POSITION ? MILESTONE_REWARD : 0f;
 
-        // Death penalty: Avoid early deaths (scaled based on simulation time)
+        // Death penalty: avoid early deaths (scaled based on simulation time)
         float deathPenalty = gm.wasDeadThisRun ? DEATH_PENALTY_BASE * (DEATH_PENALTY_SCALE - (gm.gameTimer / simulationTime)) : 0f;
 
         // Final fitness score
