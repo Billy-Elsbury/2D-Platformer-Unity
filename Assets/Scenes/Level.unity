@@ -499,7 +499,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 2343685742142402085, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: gameSpeed
-      value: 15
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 2363668431950882743, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: m_CompositePaths.m_Paths.Array.size
@@ -4891,11 +4891,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4711758305482697344, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -3.9146109
+      value: -3.1522586
       objectReference: {fileID: 0}
     - target: {fileID: 4711758305482697344, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -2.6791968
+      value: -2.6821566
       objectReference: {fileID: 0}
     - target: {fileID: 6567187699723376313, guid: 564f5bbd008aee148991f300416d7325, type: 3}
       propertyPath: controlmode
