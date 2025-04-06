@@ -35,7 +35,7 @@ public class GeneticAlgorithmRunner : MonoBehaviour
         );
 
         parameters = new Parameters(
-            populationSize: 100,
+            populationSize: 20,
             birthRatePerGeneration: 1,
             exploreCrossoverRange: 0.2f,
             geneMutationRate: 0.1f,
